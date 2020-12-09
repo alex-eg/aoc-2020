@@ -42,3 +42,96 @@
     (into [] (line-seq f))))
 
 (ns task-2)
+
+(defn do-job []
+  (->> "./src/advent_2020/2/input.txt"
+       (read-file)
+       (prepare-records)
+       (filter is-valid)
+       (count)))
+
+(defn do-job-* []
+  (->> "./src/advent_2020/2/input.txt"
+       (read-file)
+       (prepare-records)
+       (filter is-valid-*)
+       (count)))
+
+(defn is-valid [[min max char password]]
+  (let [count (count (filter (partial = char) password))]
+    (and (>= count min)
+         (<= count max))))
+
+(defn is-valid-* [[min max char password]]
+  (let [p1 (dec min)
+        p2 (dec max)]
+    (or (and (= (nth password p1) char)
+             (not= (nth password p2) char))
+        (and (not= (nth password p1) char)
+             (= (nth password p2) char)))))
+
+(defn prepare-records [records]
+  (map (fn [[range char pw]]
+         (let [min-max (clojure.string/split range #"-")]
+           (vector
+            (Integer/parseInt (nth min-max 0))
+            (Integer/parseInt (nth min-max 1))
+            (nth char 0)
+            pw)))
+       records))
+
+(defn read-file [filename]
+  (->> filename
+       (slurp)
+       (clojure.string/split-lines)
+       (map #(clojure.string/split % #" "))))
+
+(ns task-3)
+
+(defn do-job []
+  (->> "./src/advent_2020/3/input.txt"
+       (read-file)
+       (prepare-array)
+       (find-hits 3 1)))
+
+(defn do-job-* []
+  (let [data (->> "./src/advent_2020/3/input.txt"
+                  (read-file)
+                  (prepare-array))]
+    (* (find-hits 1 1 data)
+       (find-hits 3 1 data)
+       (find-hits 5 1 data)
+       (find-hits 7 1 data)
+       (find-hits 1 2 data))))
+
+(defn find-hits [dx dy data]
+  (let [width (nth data 0)
+        length (nth data 1)
+        map (nth data 2)]
+    (loop [hits 0
+           cur-x 0
+           cur-y 0]
+      (if (>= cur-y length)
+        hits
+        (recur
+         (+ hits (nth (nth map cur-y) cur-x))
+         (if (>= (+ cur-x dx) width)
+           (mod (+ cur-x dx) width)
+           (+ cur-x dx))
+         (+ cur-y dy))))))
+
+(defn read-file [filename]
+  (->> filename
+       (slurp)
+       (clojure.string/split-lines)))
+
+(defn parse-line [line]
+  (map (fn [char] (if (= char \#) 1
+                      0))
+       line))
+
+(defn prepare-array [lines]
+  (let [width (count (nth lines 0))
+        length (count lines)]
+    [width length
+     (map parse-line lines)]))

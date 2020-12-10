@@ -240,10 +240,8 @@
 
 (defn parse-record [line]
   (-> line
-      (clojure.string/replace "F" "0")
-      (clojure.string/replace "B" "1")
-      (clojure.string/replace "L" "0")
-      (clojure.string/replace "R" "1")
+      (clojure.string/replace #"[FL]" "0")
+      (clojure.string/replace #"[BR]" "1")
       (Integer/parseInt 2)))
 
 (defn do-job-* []

@@ -224,3 +224,48 @@
                        (= fld 'cid) true
                        :else false))
                record)))
+
+(ns task-5)
+
+(defn do-job []
+  (->> "./src/advent_2020/5/input.txt"
+       (read-file)
+       (map parse-record)
+       (map to-id)
+       (apply max)))
+
+(defn read-file [filename]
+  (->> filename
+       (slurp)
+       (clojure.string/split-lines)))
+
+(defn parse-record [line]
+  (let [row (subs line 0 7)
+        seat (subs line 7)]
+    [(-> row
+         (clojure.string/replace "F" "0")
+         (clojure.string/replace "B" "1")
+         (Integer/parseInt 2))
+     (-> seat
+         (clojure.string/replace "L" "0")
+         (clojure.string/replace "R" "1")
+         (Integer/parseInt 2))]))
+
+(defn to-id [[row col]]
+  (+ (* 8 row) col))
+
+(defn do-job-* []
+  (->> "./src/advent_2020/5/input.txt"
+       (read-file)
+       (map parse-record)
+       (map to-id)
+       (find-missing)))
+
+(defn find-missing [ids]
+  (let [sorted (sort ids)]
+    (reduce (fn [acc id]
+              (if (not= 1 (- id acc))
+                (reduced (dec id))
+                id))
+            (first sorted)
+            (rest sorted))))

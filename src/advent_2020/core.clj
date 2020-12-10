@@ -135,3 +135,92 @@
         length (count lines)]
     [width length
      (map parse-line lines)]))
+
+(ns task-4)
+
+(defn do-job []
+  (->> "./src/advent_2020/4/input.txt"
+       (read-file)
+       (parse-records)
+       (filter validate)
+       (count)))
+
+(defn read-file [filename]
+  (->> filename
+       (slurp)))
+
+(defn validate [record]
+  (or (= 8 (count record))
+      (and (= 7 (count record))
+           (not (some (partial = 'cid) record)))))
+
+(defn parse-records [whole]
+  (->> (clojure.string/split whole #"\n\n")
+       (map #(clojure.string/split % #"[\n ]"))
+       (map (partial map #(subs % 0 3)))
+       (map (partial map symbol))))
+
+(defn do-job-* []
+  (->> "./src/advent_2020/4/input.txt"
+       (read-file)
+       (parse-records-*)
+       (filter validate-*)
+       (count)))
+
+(defn parse-records-* [whole]
+  (->> (clojure.string/split whole #"\n\n")
+       (map #(clojure.string/split % #"[\n ]"))
+       (map (partial map #(clojure.string/split % #":")))
+       (map (partial map
+                     (fn [[sym-name value]]
+                       (let [sym (symbol sym-name)]
+                         (cond (or (= sym 'byr)
+                                   (= sym 'iyr)
+                                   (= sym 'eyr)) [sym (Integer/parseInt value)]
+                               (= sym 'hgt) [sym (parse-hgt value)]
+                               (= sym 'ecl) [sym (symbol value)]
+                               :else [sym value])))))))
+
+(defn parse-hgt [str]
+  [(Integer/parseInt (nth (clojure.string/split str #"[ci]") 0))
+   (if (clojure.string/ends-with? str "cm")
+     'cm
+     'in)])
+
+(defn validate-* [record]
+  (and
+   (or (= 8 (count record))
+       (and (= 7 (count record))
+            (not (some (fn [[field _]] (= field 'cid)) record))))
+   (validate-fields record)))
+
+(defn validate-fields [record]
+  (reduce #(and %1 %2) true
+          (map (fn [[fld val]]
+                 (cond (= fld 'byr)
+                       (and (>= val 1920)
+                            (<= val 2002))
+                       (= fld 'iyr)
+                       (and (>= val 2010)
+                            (<= val 2020))
+                       (= fld 'eyr)
+                       (and (>= val 2020)
+                            (<= val 2030))
+                       (= fld 'hgt)
+                       (let [[v unit] val]
+                         (cond (= unit 'cm)
+                               (and (>= v 150)
+                                    (<= v 193))
+                               (= unit 'in)
+                               (and (>= v 59)
+                                    (<= v 76))
+                               :else false))
+                       (= fld 'hcl)
+                       (re-find #"#[a-f0-9]{6}$" val)
+                       (= fld 'ecl)
+                       (some (partial = val) '(amb blu brn gry grn hzl oth))
+                       (= fld 'pid)
+                       (re-find #"^[0-9]{9}$" val)
+                       (= fld 'cid) true
+                       :else false))
+               record)))
